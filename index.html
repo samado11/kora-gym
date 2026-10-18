@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أكاديمية الكرة - نظام التقسيم الذكي السحابي</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Cairo -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen pb-12">
+
+    <!-- Header -->
+    <header class="bg-emerald-700 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <i class="fa-solid fa-futbol text-2xl text-emerald-300 animate-spin-slow"></i>
+                <div>
+                    <h1 class="font-extrabold text-lg leading-tight">أكاديمية الكرة</h1>
+                    <p class="text-xs text-emerald-200">التقسيم الذكي السحابي (Firebase)</p>
+                </div>
+            </div>
+            <div id="connectionStatus" class="flex items-center space-x-1 space-x-reverse text-xs bg-emerald-800 px-2.5 py-1 rounded-full border border-emerald-500">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>سحابي متصل</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 mt-6 space-y-6">
+
+        <!-- Banner for Firebase Config Warning -->
+        <div id="firebaseConfigNotice" class="hidden bg-amber-500/20 border border-amber-500 text-amber-200 p-4 rounded-xl text-sm leading-relaxed">
+            <div class="flex items-start space-x-2 space-x-reverse">
+                <i class="fa-solid fa-triangle-exclamation text-amber-400 text-lg mt-0.5"></i>
+                <div>
+                    <strong>تنبيه ربط Firebase:</strong> أضف مفاتيح مشروعك الخاصّة بـ <code>firebaseConfig</code> داخل كود السكريبت لتعمل قاعدة البيانات السحابية الخاصة بك 100%. (يعمل حالياً بنمط العرض التجريبي محلياً).
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Player & Quick Stats Bar -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Add Player Card -->
+            <div class="md:col-span-2 bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-md">
+                <h2 class="text-sm font-bold text-emerald-400 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-user-plus"></i> إضافة لاعب جديد
+                </h2>
+                <form id="addPlayerForm" class="space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <input type="text" id="playerName" placeholder="اسم اللاعب" required
+                            class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                        
+                        <select id="playerPosition" required
+                            class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                            <option value="حارس">حارس مرمى (GK)</option>
+                            <option value="مدافع">مدافع (DEF)</option>
+                            <option value="وسط" selected>خط وسط (MID)</option>
+                            <option value="مهاجم">مهاجم (FWD)</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">المهارة الفنية (1-5)</label>
+                            <select id="playerSkill" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                                <option value="5">⭐⭐⭐⭐⭐ (ممتاز)</option>
+                                <option value="4">⭐⭐⭐⭐ (جيد جداً)</option>
+                                <option value="3" selected>⭐⭐⭐ (متوسط)</option>
+                                <option value="2">⭐⭐ (مبتدئ+)</option>
+                                <option value="1">⭐ (مبتدئ)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">اللياقة البدنية (1-5)</label>
+                            <select id="playerFitness" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                                <option value="5">⚡⚡⚡⚡⚡ (عالية جداً)</option>
+                                <option value="4">⚡⚡⚡⚡ (جيدة جداً)</option>
+                                <option value="3" selected>⚡⚡⚡ (متوسطة)</option>
+                                <option value="2">⚡⚡ (مقبولة)</option>
+                                <option value="1">⚡ (منخفضة)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-xl text-sm transition-colors flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus"></i> حفظ في قاعدة البيانات
+                    </button>
+                </form>
+            </div>
+
+            <!-- Stats Overview Card -->
+            <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-md flex flex-col justify-between">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-300 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-emerald-400"></i> إحصائيات الحضور
+                    </h2>
+                    <div class="grid grid-cols-2 gap-2 text-center my-2">
+                        <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-700/50">
+                            <span class="block text-2xl font-extrabold text-emerald-400" id="presentCount">0</span>
+                            <span class="text-xs text-slate-400">حاضر جاهز</span>
+                        </div>
+                        <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-700/50">
+                            <span class="block text-2xl font-extrabold text-slate-400" id="totalCount">0</span>
+                            <span class="text-xs text-slate-400">إجمالي السكواد</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- <button onclick="resetSampleData()" class="text-xs text-slate-400 hover:text-slate-200 underline text-center w-full mt-2">
+                    <i class="fa-solid fa-arrows-rotate"></i> تحميل الأسماء التجريبية
+                </button> -->
+            </div>
+        </section>
+
+        <!-- Generation Setup Panel -->
+        <section class="bg-gradient-to-r from-emerald-950 to-slate-800 p-5 rounded-2xl border border-emerald-800/50 shadow-lg">
+            <h2 class="text-base font-bold text-emerald-300 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-sliders"></i> إعدادات التقسيمة السريعة
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+                <div>
+                    <label class="text-xs font-semibold text-slate-300 block mb-1">عدد الفرق المطلوبة:</label>
+                    <select id="teamCountSelect" class="w-full bg-slate-900 border border-emerald-600 rounded-xl px-3 py-2 text-sm text-white focus:outline-none">
+                        <option value="2" selected>فريقين (Team A vs Team B)</option>
+                        <option value="3">3 فرق (دوري مصغر)</option>
+                        <option value="4">4 فرق (بطولة الأكاديمية)</option>
+                    </select>
+                </div>
+                <button onclick="generateTeams()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-extrabold py-2.5 px-4 rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-lg"></i> توليد التقسيمة المتوازنة
+                </button>
+            </div>
+        </section>
+
+        <!-- Generated Teams Output -->
+        <section id="teamsOutput" class="space-y-4">
+            <!-- Dynamic Teams Cards Will Be Rendered Here -->
+        </section>
+
+        <!-- Players Roster List -->
+        <section class="bg-slate-800 rounded-2xl border border-slate-700 shadow-md p-4">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-base font-bold text-slate-200 flex items-center gap-2">
+                    <i class="fa-solid fa-users text-emerald-400"></i> قائمة أسماء اللاعبين
+                </h2>
+                <div class="flex gap-2">
+                    <button onclick="selectAll(true)" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded-lg">تحضير الكل</button>
+                    <button onclick="selectAll(false)" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded-lg">تغيب الكل</button>
+                </div>
+            </div>
+
+            <!-- Roster List Container -->
+            <div id="playersList" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <!-- Dynamic Player Items -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Firebase App Modules (ES Modules) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { 
+            getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, writeBatch 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // ==========================================
+        // 1. Firebase Configuration Settings
+        // ==========================================
+        const firebaseConfig = {
+             apiKey: "AIzaSyAZDApyOj6hdWFSYQ2ygi642JyRPbwKrnA",
+    authDomain: "kora-gym.firebaseapp.com",
+    projectId: "kora-gym",
+    storageBucket: "kora-gym.firebasestorage.app",
+    messagingSenderId: "769519577098",
+    appId: "1:769519577098:web:c23c4d9b03c50eeb8257f3",
+    measurementId: "G-E0LM5XJB3Y"
+        };
+
+        let db = null;
+        let isFirebaseActive = false;
+        let players = [];
+
+        // Check if config has been modified by user
+        if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                isFirebaseActive = true;
+                console.log("Firebase initialized successfully.");
+            } catch (err) {
+                console.warn("Firebase Init failed, using local mode fallback.", err);
+            }
+        } else {
+            document.getElementById('firebaseConfigNotice').classList.remove('hidden');
+        }
+
+        // ==========================================
+        // 2. Initial Sample Players
+        // ==========================================
+        const defaultSamplePlayers = [
+            
+        ];
+
+        // Local Storage Helper Fallback
+        const loadLocalPlayers = () => {
+            const saved = localStorage.getItem('academy_players_db');
+            return saved ? JSON.parse(saved) : defaultSamplePlayers;
+        };
+
+        const saveLocalPlayers = (data) => {
+            localStorage.setItem('academy_players_db', JSON.stringify(data));
+            players = data;
+            renderRoster();
+        };
+
+        // Initialize Data Stream
+        if (isFirebaseActive) {
+            const playersCol = collection(db, "players");
+            onSnapshot(playersCol, (snapshot) => {
+                players = [];
+                snapshot.forEach(docSnap => {
+                    players.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                renderRoster();
+            });
+        } else {
+            players = loadLocalPlayers();
+            renderRoster();
+        }
+
+        // ==========================================
+        // 3. UI Roster Rendering
+        // ==========================================
+        function renderRoster() {
+            const container = document.getElementById('playersList');
+            container.innerHTML = '';
+
+            const presentCount = players.filter(p => p.isPresent).length;
+            document.getElementById('presentCount').innerText = presentCount;
+            document.getElementById('totalCount').innerText = players.length;
+
+            players.forEach((player, index) => {
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-xl border transition flex items-center justify-between ${
+                    player.isPresent ? 'bg-slate-900/90 border-slate-700' : 'bg-slate-900/30 border-slate-800 opacity-50'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3 space-x-reverse">
+                        <button onclick="togglePresence('${player.id || index}')" class="w-8 h-8 rounded-lg flex items-center justify-center transition ${
+                            player.isPresent ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-slate-800 text-slate-500 border border-slate-700'
+                        }">
+                            <i class="fa-solid ${player.isPresent ? 'fa-check' : 'fa-xmark'}"></i>
+                        </button>
+                        <div>
+                            <div class="font-bold text-sm text-slate-200">${player.name}</div>
+                            <div class="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
+                                <span class="bg-slate-800 px-2 py-0.5 rounded border border-slate-700 text-emerald-400 font-semibold">${player.position}</span>
+                                <span>⭐ ${player.skill}</span>
+                                <span>⚡ ${player.fitness}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="deletePlayer('${player.id || index}')" class="text-slate-500 hover:text-rose-400 p-1.5 transition">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // ==========================================
+        // 4. Data Operations (Add/Delete/Toggle)
+        // ==========================================
+        window.togglePresence = async (idOrIndex) => {
+            if (isFirebaseActive) {
+                const player = players.find(p => p.id === idOrIndex);
+                if (player) {
+                    await updateDoc(doc(db, "players", idOrIndex), { isPresent: !player.isPresent });
+                }
+            } else {
+                const updated = [...players];
+                updated[idOrIndex].isPresent = !updated[idOrIndex].isPresent;
+                saveLocalPlayers(updated);
+            }
+        };
+
+        window.deletePlayer = async (idOrIndex) => {
+            if (confirm("هل أنت تأكد من حذف هذا اللاعب؟")) {
+                if (isFirebaseActive) {
+                    await deleteDoc(doc(db, "players", idOrIndex));
+                } else {
+                    const updated = players.filter((_, idx) => idx !== parseInt(idOrIndex));
+                    saveLocalPlayers(updated);
+                }
+            }
+        };
+
+        window.selectAll = async (status) => {
+            if (isFirebaseActive) {
+                const batch = writeBatch(db);
+                players.forEach(p => {
+                    batch.update(doc(db, "players", p.id), { isPresent: status });
+                });
+                await batch.commit();
+            } else {
+                const updated = players.map(p => ({ ...p, isPresent: status }));
+                saveLocalPlayers(updated);
+            }
+        };
+
+        window.resetSampleData = async () => {
+            if (confirm("سيتم إعادة قائمة اللاعبين الافتراضية، هل تريد المتابعة؟")) {
+                if (isFirebaseActive) {
+                    // Reset Firestore
+                    const batch = writeBatch(db);
+                    players.forEach(p => batch.delete(doc(db, "players", p.id)));
+                    defaultSamplePlayers.forEach(p => {
+                        const newRef = doc(collection(db, "players"));
+                        batch.set(newRef, p);
+                    });
+                    await batch.commit();
+                } else {
+                    saveLocalPlayers(defaultSamplePlayers);
+                }
+            }
+        };
+
+        document.getElementById('addPlayerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newPlayer = {
+                name: document.getElementById('playerName').value.trim(),
+                position: document.getElementById('playerPosition').value,
+                skill: parseInt(document.getElementById('playerSkill').value),
+                fitness: parseInt(document.getElementById('playerFitness').value),
+                isPresent: true
+            };
+
+            if (isFirebaseActive) {
+                await addDoc(collection(db, "players"), newPlayer);
+            } else {
+                saveLocalPlayers([...players, newPlayer]);
+            }
+
+            document.getElementById('playerName').value = '';
+        });
+
+        // ==========================================
+        // 5. Intelligent Balanced Team Generator Algorithm
+        // ==========================================
+        window.generateTeams = () => {
+            const activePlayers = players.filter(p => p.isPresent);
+            const teamCount = parseInt(document.getElementById('teamCountSelect').value);
+
+            if (activePlayers.length < teamCount) {
+                alert(`عدد اللاعبين الحاضرين (${activePlayers.length}) لا يكفي لتقسيم ${teamCount} فريق!`);
+                return;
+            }
+
+            // Calculate Composite Score for Sorting: (Skill * 0.6) + (Fitness * 0.4)
+            const calcScore = (p) => (p.skill * 0.6) + (p.fitness * 0.4);
+
+            // Separate Goalkeepers & Field Players
+            const goalkeepers = activePlayers.filter(p => p.position === 'حارس').sort((a,b) => calcScore(b) - calcScore(a));
+            const fieldPlayers = activePlayers.filter(p => p.position !== 'حارس').sort((a,b) => calcScore(b) - calcScore(a));
+
+            // Initialize Empty Teams
+            const teams = Array.from({ length: teamCount }, (_, i) => ({
+                id: i + 1,
+                name: `فريق ${String.fromCharCode(65 + i)}`, // الفريق A, الفريق B, etc.
+                color: ['from-blue-600 to-indigo-900', 'from-emerald-600 to-teal-900', 'from-amber-600 to-orange-900', 'from-purple-600 to-pink-900'][i % 4],
+                players: []
+            }));
+
+            // Step 1: Distribute Goalkeepers Snake Style
+            goalkeepers.forEach((gk, idx) => {
+                teams[idx % teamCount].players.push(gk);
+            });
+
+            // Step 2: Distribute Field Players Using Snake Draft for Balance
+            let direction = 1;
+            let teamIdx = 0;
+
+            fieldPlayers.forEach(player => {
+                teams[teamIdx].players.push(player);
+                teamIdx += direction;
+                if (teamIdx >= teamCount) {
+                    direction = -1;
+                    teamIdx = teamCount - 1;
+                } else if (teamIdx < 0) {
+                    direction = 1;
+                    teamIdx = 0;
+                }
+            });
+
+            // Render Results Output
+            renderGeneratedTeams(teams);
+        };
+
+        function renderGeneratedTeams(teams) {
+            const container = document.getElementById('teamsOutput');
+            container.innerHTML = '';
+
+            let shareableText = `⚽ *تقسيمة أكاديمية كرة القدم* ⚽\n📅 التاريخ: ${new Date().toLocaleDateString('ar-EG')}\n--------------------\n`;
+
+            teams.forEach(team => {
+                const avgSkill = (team.players.reduce((acc, p) => acc + p.skill, 0) / (team.players.length || 1)).toFixed(1);
+                const avgFitness = (team.players.reduce((acc, p) => acc + p.fitness, 0) / (team.players.length || 1)).toFixed(1);
+
+                shareableText += `\n*${team.name}* (العدد: ${team.players.length})\n`;
+                team.players.forEach(p => {
+                    shareableText += `- ${p.name} (${p.position})\n`;
+                });
+
+                const card = document.createElement('div');
+                card.className = `bg-gradient-to-br ${team.color} p-4 rounded-2xl shadow-xl text-white border border-white/10`;
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between pb-3 border-b border-white/20 mb-3">
+                        <h3 class="font-extrabold text-base flex items-center gap-2">
+                            <i class="fa-solid fa-shirt"></i> ${team.name}
+                        </h3>
+                        <div class="flex gap-3 text-xs bg-black/30 px-3 py-1 rounded-full border border-white/10">
+                            <span>⭐ المهارة: <b>${avgSkill}</b></span>
+                            <span>⚡ اللياقة: <b>${avgFitness}</b></span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                        ${team.players.map(p => `
+                            <div class="bg-black/20 p-2 rounded-xl flex items-center justify-between border border-white/5">
+                                <span class="font-bold">${p.name}</span>
+                                <span class="text-xs bg-white/20 px-2 py-0.5 rounded">${p.position}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            // Add WhatsApp Share Action Button
+            const actionCard = document.createElement('div');
+            actionCard.className = "flex justify-center mt-2";
+            actionCard.innerHTML = `
+                <a href="https://wa.me/?text=${encodeURIComponent(shareableText)}" target="_blank" 
+                   class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-6 rounded-xl shadow-lg transition flex items-center gap-2 text-sm">
+                    <i class="fa-brands fa-whatsapp text-lg"></i> مشاركة التقسيمة عبر واتساب
+                </a>
+            `;
+            container.appendChild(actionCard);
+        }
+
+    </script>
+</body>
+</html>
